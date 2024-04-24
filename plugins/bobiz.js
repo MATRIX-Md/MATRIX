@@ -16,9 +16,9 @@ let handler = async (m, {
         throw eror
     }
 }
-handler.help = ["bobiz"]
+handler.help = ["matrix"]
 handler.tags = ["sticker"]
-handler.command = /^(bobiz)$/i
+handler.command = /^(matrix)$/i
 
 export default handler
 
