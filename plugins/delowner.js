@@ -2,7 +2,7 @@ let handler = async (m, { conn, text }) => {
     let who
     if (m.isGroup) who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : text
     else who = m.chat
-    if (!who) throw 'قم بالاشارة للشخص الذي ازالتت من ملكية البوت'
+    if (!who) throw 'قم بالاشارة للشخص الذي تريد ازالته من ملكية البوت'
     if (!global.owner.includes(who.split`@`[0])) throw 'تمت ازالته من ملكية البوت ♥!'
     let index = global.owner.findIndex(v => (v.replace(/[^0-9]/g, '') + '@s.whatsapp.net') === (who.replace(/[^0-9]/g, '') + '@s.whatsapp.net'))
     global.owner.splice(index, 1)
