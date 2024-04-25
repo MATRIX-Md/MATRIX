@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
  async function handler(m, { conn, args, text, command, usedPrefix, isCreator, isPrems }) {
   let response = args.join(' ').split('|');
-  if (!args[0]) throw 'يمكنك صناعة شعار تيكتوك مثال :\n\n*.ttlogo* bobiza|bot';
+  if (!args[0]) throw 'يمكنك صناعة شعار تيكتوك مثال :\n\n*.ttlogo* matrix|bot';
   conn.sendMessage(m.chat, {
     react: {
       text: '🕒',
