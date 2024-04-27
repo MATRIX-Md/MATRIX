@@ -18,7 +18,7 @@ let handler = async (m, {
     ]
 
     let [feature, inputs] = text.split("|")
-    if (!lister.includes(feature)) return m.reply("هذا الامر خاص بتحميل قصص المانغا على شكل pdf مثال نكتب هكذا\n\n```.manga search|one pice```\n\n\n*الأوامر التي سوف تستعلمها في هذا الأمر*\n" + lister.map((v, index) => "  ○ " + v).join("\n"))
+    if (!lister.includes(feature)) return m.reply("هذا الامر خاص بتحميل قصص المانغا على شكل pdf مثال نكتب هكذا\n\n```.manga search|naruto```\n\n\n*الأوامر التي سوف تستعلمها في هذا الأمر*\n" + lister.map((v, index) => "  ○ " + v).join("\n"))
 
     if (lister.includes(feature)) {
 
