@@ -30,7 +30,7 @@ ${bocil.author ? bocil.author : nothing}
 
 *乂 Url 乂*
 ${bocil.link ? bocil.link : nothing}
-_By MOUL BOBIZA_
+_By MOUL MATRIX_
 `;
         await m.reply(bocap);
     } catch (e) {
@@ -48,7 +48,7 @@ ${(await jenius.artist).name ? await(jenius.artist).name : nothing}
 *乂 Url 乂*
 ${jenius.url ? jenius.url : nothing}
 
-instagram.com/noureddine_ouafy
+instagram.com/matrix__tv5
 `;
             await m.reply(albert);
         } catch (e) {
