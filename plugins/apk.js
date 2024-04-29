@@ -1,20 +1,97 @@
-import {search, download} from 'aptoide-scraper';
-const handler = async (m, {conn, usedPrefix: prefix, command, text}) => {
- if (!text) throw `معشوق الجماهير هذا الأمر خاص بتحميل التطبيقات المجانية والمدفوعة منها نكتب هكذا على سبيل المثال \n*.apk facebbok lite*`;
-  try {    
-    const searchA = await search(text);
-    const data5 = await download(searchA[0].id);
-    let response = `📲 تحميل التطبيقات 📲\n\n📌 *اسم التطبيق:* ${data5.name}\n📦 *الباكيدج:* ${data5.package}\n🕒 *تحذيث رقم:* ${data5.lastup}\n📥 *حجم التطبيق:* ${data5.size}\n\nما الذي يجعلك لا تتابع  صاحب البوت يا عزيزي  😄 \ninstagram.com/matrix__tv5`
-    await conn.sendMessage(m.chat, {image: {url: data5.icon}, caption: response}, {quoted: m});
- if (data5.size.includes('GB') || data5.size.replace(' MB', '') > 999) {
-      return await conn.sendMessage(m.chat, {text: '*[ 😁 ]الملف كبير جدًا لذا لن يتم إرساله.'}, {quoted: m});
-    }
-    await conn.sendMessage(m.chat, {document: {url: data5.dllink}, mimetype: 'application/vnd.android.package-archive', fileName: data5.name + '.apk', caption: null}, {quoted: m});
-  } catch {
-    throw `*[😒] خطأ، لم يتم العثور على نتائج لبحثك.*`;
-  }    
+//By ABD EL ILAH 
+//www.guthub.com/MATRIX-BOT-MD
+//instagram com/matrix__tv5
+//MATRIX ADMIN 
+
+
+import fetch from 'node-fetch';
+
+let handler = async (m, { conn, args, text, usedPrefix, command }) => {
+  if (!args[0]) throw `*تحميل التطبيقات مع الملف الإضافي obb* \n\n مثـال :\n  ${usedPrefix}${command} firee fire`;
+  let info = await apkinfo(text);
+  let res = await apk(text);
+
+  if (res.size > 2000000000) {
+    throw '*ملف APK كبير جدًا. الحد الأقصى لحجم التنزيل هو 2GB ميجابايت*.';
+  }
+
+  let message = await conn.sendMessage(m.chat, {
+    image: { url: info.icon },
+    caption: `*App Name:* \n${info.name}\n*Package Name:* \n${info.packageN} \n\n> *ᴊɪᴛᴏssᴀ ʙᴇᴛᴀ 1.1.0ᴠ*`,
+    footer: '_Apk files..._',
+  });
+
+ 
+  await conn.sendMessage(
+    m.chat,
+    { document: { url: res.download }, mimetype: res.mimetype, fileName: res.fileName },
+    { quoted: m }
+  );
+
+  if (info.obb) {
+    await conn.sendMessage(m.chat, {
+      text: `جاري تحميل ملف OBB لـ ${info.name}...`,
+    });
+
+    let obbRes = await fetch(info.obb_link);
+    let obbMimetype = obbRes.headers.get('content-type');
+
+    await conn.sendMessage(
+      m.chat,
+      { document: { url: info.obb_link }, mimetype: obbMimetype, fileName: `${info.packageN}.obb` },
+      { quoted: m }
+    );
+  }
+
+  
+  //await conn.deleteMessage(m.chat, message.key.id)
 };
-handler.help = ["apk"]
-handler.tags = ["applications"]
-handler.command = ["apk"] 
+
+handler.command = /^(apk)$/i;
+handler.help = ['apk'];
+handler.tags = ['applications'];
+handler.premium = false;
+
 export default handler;
+
+async function apkinfo(url) {
+  let res = await fetch('http://ws75.aptoide.com/api/7/apps/search?query=' + url + '&limit=1');
+  let $ = await res.json();
+
+  try {
+    let icon = $.datalist.list[0].icon;
+  } catch {
+    throw 'تعذر تحميل التطبيق انا اسف';
+  }
+
+  let icon = $.datalist.list[0].icon;
+  let name = $.datalist.list[0].name;
+  let packageN = $.datalist.list[0].package;
+  let download = $.datalist.list[0].file.path;
+  let obb_link;
+  let obb;
+
+  try {
+    obb_link = await $.datalist.list[0].obb.main.path;
+    obb = true;
+  } catch {
+    obb_link = '_غير موجود_';
+    obb = false;
+  }
+
+  if (!download) throw 'تعذر تحميل التطبيق انا اسف';
+  return { obb, obb_link, name, icon, packageN };
+}
+
+async function apk(url) {
+  let res = await fetch('http://ws75.aptoide.com/api/7/apps/search?query=' + encodeURIComponent(url) + '&limit=1');
+  let $ = await res.json();
+  let fileName = $.datalist.list[0].package + '.apk';
+  let download = $.datalist.list[0].file.path;
+  let size = (await fetch(download, { method: 'head' })).headers.get('Content-Length');
+  if (!download) throw 'Can\'t download the apk!';
+  let icon = $.datalist.list[0].icon;
+  let mimetype = (await fetch(download, { method: 'head' })).headers.get('content-type');
+
+  return { fileName, mimetype, download, size };
+}
