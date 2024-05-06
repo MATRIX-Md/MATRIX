@@ -1,97 +1,50 @@
-//By ABD EL ILAH 
-//www.guthub.com/MATRIX-BOT-MD
-//instagram com/matrix__tv5
-//MATRIX ADMIN 
+import { search, download } from 'aptoide-scraper';
 
+const handler = async (m, { conn, usedPrefix, command, text }) => {
+  if (!text) return conn.reply(m.chat, '*تحميل التطبيقات محبوب الجماهير يقوم بتحميل التطبيقات*\n\n*مثــال:*\n .apk facebook lite', m);
 
-import fetch from 'node-fetch';
+  try {
+    let searchResults = await search(text);
+    if (searchResults.length === 0) {
+      return conn.reply(m.chat, ' *لا توجد نتائج لهذا التطبيق*', m);
+    }
 
-let handler = async (m, { conn, args, text, usedPrefix, command }) => {
-  if (!args[0]) throw `*تحميل التطبيقات مع الملف الإضافي obb* \n\n مثـال :\n  ${usedPrefix}${command} firee fire`;
-  let info = await apkinfo(text);
-  let res = await apk(text);
+    let data = await download(searchResults[0].id);
+    if (!data || !data.name || !data.package || !data.lastup || !data.size || !data.dllink || !data.icon) {
+      return conn.reply(m.chat, '*لا يمكن الحصول على تفاصيل التطبيق*', m);
+    }
 
-  if (res.size > 2000000000) {
-    throw '*ملف APK كبير جدًا. الحد الأقصى لحجم التنزيل هو 2GB ميجابايت*.';
-  }
+    let response = `💌 *اسم التطبيق:* ${data.name}\n📦 *الحزمة:* ${data.package}\n🕒 *آخر تحديث:* ${data.lastup}\n📥 *الحجم:* ${data.size}\n\n_إنضم لعائلة MATRIX عبر الضغط على الرابط_\n`;
 
-  let message = await conn.sendMessage(m.chat, {
-    image: { url: info.icon },
-    caption: `*App Name:* \n${info.name}\n*Package Name:* \n${info.packageN} \n\n> *ᴊɪᴛᴏssᴀ ʙᴇᴛᴀ 1.1.0ᴠ*`,
-    footer: '_Apk files..._',
-  });
+    if (data.size.includes('GB') || parseFloat(data.size.replace(' MB', '')) > 999) {
+      return conn.reply(m.chat, '🚩 *الملف ثقيل جدًا*', m);
+    }
 
- 
-  await conn.sendMessage(
-    m.chat,
-    { document: { url: res.download }, mimetype: res.mimetype, fileName: res.fileName },
-    { quoted: m }
-  );
-
-  if (info.obb) {
+    const iconUrl = data.icon; // رابط أيقونة التطبيق
     await conn.sendMessage(m.chat, {
-      text: `جاري تحميل ملف OBB لـ ${info.name}...`,
-    });
+      text: response,
+      contextInfo: {
+        externalAdReply: {
+          title: data.name,
+          body: 'جاري تحميل التطبيق',
+          sourceUrl: 'https://whatsapp.com/channel/0029VaaCz3SGehEVwMLHyB0i',
+          thumbnailUrl: iconUrl, // رابط أيقونة التطبيق هنا
+          mediaType: 1, // نوع المشاركة: صورة
+          showAdAttribution: true,
+          renderLargerThumbnail: true
+        }
+      }
+    }, { quoted: m });
 
-    let obbRes = await fetch(info.obb_link);
-    let obbMimetype = obbRes.headers.get('content-type');
-
-    await conn.sendMessage(
-      m.chat,
-      { document: { url: info.obb_link }, mimetype: obbMimetype, fileName: `${info.packageN}.obb` },
-      { quoted: m }
-    );
+    await conn.sendMessage(m.chat, { document: { url: data.dllink }, mimetype: 'application/vnd.android.package-archive', fileName: data.name + '.apk', caption: null }, { quoted: m });
+  } catch (error) {
+    console.error(error);
+    return conn.reply(m.chat, '*حدث خطأ أثناء معالجة الطلب*', m);
   }
-
-  
-  //await conn.deleteMessage(m.chat, message.key.id)
 };
 
-handler.command = /^(apk)$/i;
-handler.help = ['apk'];
 handler.tags = ['applications'];
-handler.premium = false;
+handler.help = ['apk'];
+handler.command = /^(apk|apkdl|dapk2|aptoide|aptoidedl)$/i;
 
 export default handler;
-
-async function apkinfo(url) {
-  let res = await fetch('http://ws75.aptoide.com/api/7/apps/search?query=' + url + '&limit=1');
-  let $ = await res.json();
-
-  try {
-    let icon = $.datalist.list[0].icon;
-  } catch {
-    throw 'تعذر تحميل التطبيق انا اسف';
-  }
-
-  let icon = $.datalist.list[0].icon;
-  let name = $.datalist.list[0].name;
-  let packageN = $.datalist.list[0].package;
-  let download = $.datalist.list[0].file.path;
-  let obb_link;
-  let obb;
-
-  try {
-    obb_link = await $.datalist.list[0].obb.main.path;
-    obb = true;
-  } catch {
-    obb_link = '_غير موجود_';
-    obb = false;
-  }
-
-  if (!download) throw 'تعذر تحميل التطبيق انا اسف';
-  return { obb, obb_link, name, icon, packageN };
-}
-
-async function apk(url) {
-  let res = await fetch('http://ws75.aptoide.com/api/7/apps/search?query=' + encodeURIComponent(url) + '&limit=1');
-  let $ = await res.json();
-  let fileName = $.datalist.list[0].package + '.apk';
-  let download = $.datalist.list[0].file.path;
-  let size = (await fetch(download, { method: 'head' })).headers.get('Content-Length');
-  if (!download) throw 'Can\'t download the apk!';
-  let icon = $.datalist.list[0].icon;
-  let mimetype = (await fetch(download, { method: 'head' })).headers.get('content-type');
-
-  return { fileName, mimetype, download, size };
-}
